@@ -1,0 +1,2 @@
+# Generated Canvas declarations are compared byte-for-byte by the canonical CLI.
+generated/*.d.ts text eol=lf

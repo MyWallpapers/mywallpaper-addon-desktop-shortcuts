@@ -1,100 +1,99 @@
 {
+  "runtime": "canvas-native-v1",
   "name": "Desktop Shortcuts",
-  "version": "2.0.2",
+  "version": "3.0.0",
   "description": "Desktop-style shortcut icons — add, arrange, and launch apps, files, and URLs",
-  "author": "MyWallpaper",
-  "entry": "index.js",
-  "settings": {
-    "iconsData": {
-      "type": "string",
-      "content": {
-        "label": "Icons Data",
-        "default": "[]",
-        "hidden": true
-      }
-    },
-    "actionsSection": {
-      "type": "section",
-      "content": {
-        "label": "Actions"
-      }
-    },
-    "addShortcut": {
-      "type": "button",
-      "content": {
-        "label": "Add Shortcut",
-        "buttonLabel": "Add Shortcut"
-      }
-    },
-    "scanDesktop": {
-      "type": "button",
-      "content": {
-        "label": "Import Desktop Icons",
-        "buttonLabel": "Scan Desktop"
-      }
-    },
-    "clearAll": {
-      "type": "button",
-      "content": {
-        "label": "Remove All Icons",
-        "buttonLabel": "Clear All"
-      }
-    },
-    "appearanceSection": {
-      "type": "section",
-      "content": {
-        "label": "Appearance"
-      }
-    },
-    "iconSize": {
-      "type": "range",
-      "content": {
-        "label": "Icon Size",
-        "min": 32,
-        "max": 96,
-        "step": 4,
-        "default": 48
-      }
-    },
-    "gridSpacing": {
-      "type": "range",
-      "content": {
-        "label": "Grid Spacing",
-        "min": 60,
-        "max": 160,
-        "step": 5,
-        "default": 90
-      }
-    },
-    "showLabels": {
-      "type": "boolean",
-      "content": {
-        "label": "Show Labels",
-        "default": true
-      }
-    },
-    "labelColor": {
-      "type": "color",
-      "content": {
-        "label": "Label Color",
-        "default": "#ffffff"
-      }
-    }
-  },
-  "permissions": {
-    "fileAccess": {
-      "reason": "Display shortcut icon images"
-    },
-    "openPath": true
-  },
-  "defaultLayout": {
-    "xPercent": 0,
-    "yPercent": 0,
-    "widthPercent": 100,
-    "heightPercent": 100
-  },
+  "entry": "dist/assets/addon.js",
+  "thumbnail": "assets/thumbnail.png",
+  "deviceSettingsVersion": "1",
   "ui": {
     "pointerEvents": "auto"
   },
-  "repository": "https://github.com/MyWallpapers/mywallpaper-addon-desktop-shortcuts"
+  "settings": [
+    {
+      "id": "iconsData",
+      "type": "textarea",
+      "label": "Shortcuts on this device",
+      "default": "[]",
+      "scope": "device",
+      "description": "Local shortcut paths and icon positions. These values stay on this device."
+    },
+    {
+      "id": "actionsSection",
+      "type": "section",
+      "label": "Actions"
+    },
+    {
+      "id": "addShortcut",
+      "type": "button",
+      "label": "Add Shortcut",
+      "buttonLabel": "Add Shortcut",
+      "parent": "actionsSection"
+    },
+    {
+      "id": "scanDesktop",
+      "type": "button",
+      "label": "Import Desktop Icons",
+      "buttonLabel": "Scan Desktop",
+      "parent": "actionsSection"
+    },
+    {
+      "id": "clearAll",
+      "type": "button",
+      "label": "Remove All Icons",
+      "buttonLabel": "Clear All",
+      "parent": "actionsSection"
+    },
+    {
+      "id": "appearanceSection",
+      "type": "section",
+      "label": "Appearance"
+    },
+    {
+      "id": "iconSize",
+      "type": "range",
+      "label": "Icon Size",
+      "min": 32,
+      "max": 96,
+      "step": 4,
+      "default": 48,
+      "parent": "appearanceSection",
+      "scope": "layer"
+    },
+    {
+      "id": "gridSpacing",
+      "type": "range",
+      "label": "Grid Spacing",
+      "min": 60,
+      "max": 160,
+      "step": 5,
+      "default": 90,
+      "parent": "appearanceSection",
+      "scope": "layer"
+    },
+    {
+      "id": "showLabels",
+      "type": "boolean",
+      "label": "Show Labels",
+      "default": true,
+      "parent": "appearanceSection",
+      "scope": "layer"
+    },
+    {
+      "id": "labelColor",
+      "type": "color",
+      "label": "Label Color",
+      "default": "#ffffff",
+      "parent": "appearanceSection",
+      "scope": "layer"
+    }
+  ],
+  "native": {
+    "companion": {
+      "runtime": "process-v2",
+      "entries": {
+        "windows-x86_64": "native/out/windows-x86_64/bin/backend.exe"
+      }
+    }
+  }
 }

@@ -1,21 +1,25 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
-import {
-  useSettings,
-  useSettingsActions,
-  useSystemActions,
-  useViewport,
-} from '@mywallpaper/sdk-react'
+import type { DesktopIcon } from './native-client'
 import type { Settings, ShortcutIcon } from './types'
 import { parseIcons, serializeIcons, assignGridPosition, assignGridPositions, generateLetterIcon } from './utils'
 import { AddIconDialog } from './AddIconDialog'
 
 const DRAG_THRESHOLD = 5
 
-export default function DesktopShortcuts() {
-  const settings = useSettings<Settings>()
-  const { setValue, onButtonClick } = useSettingsActions()
-  const { openPath, getDesktopIcons } = useSystemActions()
-  const { width, height } = useViewport()
+export interface DesktopShortcutsProps {
+  settings: Settings
+  width: number
+  height: number
+  setValue(key: 'iconsData', value: string): Promise<void>
+  onButtonClick(key: string, listener: () => void): () => void
+  openPath(path: string): Promise<void>
+  getDesktopIcons(): Promise<DesktopIcon[]>
+  browsePath(): Promise<string | null>
+  nativeStatus: string | null
+}
+
+export default function DesktopShortcuts({ settings, setValue, onButtonClick, openPath, getDesktopIcons, browsePath, width, height, nativeStatus }: DesktopShortcutsProps) {
+  const [error, setError] = useState<string | null>(null)
 
   const [showAddDialog, setShowAddDialog] = useState(false)
   const [hoveredIconId, setHoveredIconId] = useState<string | null>(null)
@@ -39,20 +43,22 @@ export default function DesktopShortcuts() {
   // Save icons helper
   const saveIcons = useCallback(
     (updated: ShortcutIcon[]) => {
-      setValue('iconsData', serializeIcons(updated))
+      void setValue('iconsData', serializeIcons(updated)).catch((error: unknown) => {
+        setError(error instanceof Error ? error.message : 'Could not save shortcuts.')
+      })
     },
     [setValue]
   )
 
   // Button click handlers
   useEffect(() => {
-    onButtonClick('addShortcut', () => {
+    return onButtonClick('addShortcut', () => {
       setShowAddDialog(true)
     })
   }, [onButtonClick])
 
   useEffect(() => {
-    onButtonClick('scanDesktop', async () => {
+    return onButtonClick('scanDesktop', async () => {
       try {
         const desktopIcons = await getDesktopIcons()
         if (!desktopIcons.length) return
@@ -71,13 +77,14 @@ export default function DesktopShortcuts() {
         const positioned = assignGridPositions(currentIcons, newIcons, maxRows)
         saveIcons([...currentIcons, ...positioned])
       } catch (err) {
+        setError(err instanceof Error ? err.message : 'Could not import desktop shortcuts.')
         console.error('[DesktopShortcuts] Failed to scan desktop icons:', err)
       }
     })
   }, [onButtonClick, getDesktopIcons, settings.iconsData, maxRows, saveIcons])
 
   useEffect(() => {
-    onButtonClick('clearAll', () => {
+    return onButtonClick('clearAll', () => {
       saveIcons([])
     })
   }, [onButtonClick, saveIcons])
@@ -117,6 +124,7 @@ export default function DesktopShortcuts() {
     (icon: ShortcutIcon) => {
       if (didDragRef.current) return
       openPath(icon.execPath).catch((err) => {
+        setError(err instanceof Error ? err.message : 'Could not open this shortcut.')
         console.error('[DesktopShortcuts] Failed to open path:', icon.execPath, err)
       })
     },
@@ -225,6 +233,7 @@ export default function DesktopShortcuts() {
 
   return (
     <div ref={containerRef} style={{ position: 'relative', width, height, overflow: 'hidden' }}>
+      {(error || nativeStatus) && <p role="status" style={{ position: 'absolute', top: 0, left: 8, right: 8, zIndex: 20, padding: 8, background: '#282832', color: '#fff', borderRadius: 8 }}>{error || nativeStatus}</p>}
       {icons.length === 0 && !showAddDialog && (
         <div style={emptyStateStyle}>
           <svg
@@ -400,6 +409,7 @@ export default function DesktopShortcuts() {
 
       {showAddDialog && (
         <AddIconDialog
+          browsePath={browsePath}
           onSave={handleAddIcon}
           onCancel={() => setShowAddDialog(false)}
         />

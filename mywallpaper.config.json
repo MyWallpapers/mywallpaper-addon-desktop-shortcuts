@@ -1,0 +1,17 @@
+{
+  "web": {
+    "command": "node.exe",
+    "args": ["node_modules/vite/bin/vite.js", "--host", "127.0.0.1", "--port", "5179"]
+  },
+  "native": {
+    "builds": [
+      {
+        "id": "companion-windows-x86_64",
+        "command": "cargo.exe",
+        "args": ["install", "--locked", "--path", ".", "--root", "../out/windows-x86_64", "--target", "x86_64-pc-windows-msvc"],
+        "cwd": "native/companion",
+        "outputs": ["native/out/windows-x86_64/bin/backend.exe"]
+      }
+    ]
+  }
+}
