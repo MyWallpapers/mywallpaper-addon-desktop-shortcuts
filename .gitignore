@@ -1,1 +1,6 @@
 node_modules/
+dist/
+native/out/
+native/companion/target/
+public/
+.toolchain/

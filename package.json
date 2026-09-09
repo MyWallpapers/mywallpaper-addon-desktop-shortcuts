@@ -1,19 +1,24 @@
 {
   "name": "mywallpaper-addon-desktop-shortcuts",
-  "version": "2.0.2",
+  "version": "3.0.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "vite build",
-    "dev": "vite build --watch",
-    "serve": "npx serve dist --cors -l 5173"
+    "build": "vite build && node scripts/write-notices.mjs",
+    "dev": "vite --host 127.0.0.1 --port 5174",
+    "typecheck": "tsc --noEmit",
+    "test": "node scripts/verify-dist-entry.mjs"
   },
   "devDependencies": {
-    "@mywallpaper/sdk-react": "file:../MyWallpaper/packages/sdk-react",
-    "@mywallpaper/vite-plugin": "file:../MyWallpaper/packages/vite-plugin",
     "@types/react": "^19.0.0",
-    "react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
     "typescript": "^5.7.0",
     "vite": "^7.3.2"
+  },
+  "packageManager": "pnpm@10.33.0",
+  "license": "MIT",
+  "dependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
   }
 }

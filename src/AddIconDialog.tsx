@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { generateLetterIcon, extractNameFromPath } from './utils'
 
 interface AddIconDialogProps {
+  browsePath: () => Promise<string | null>
   onSave: (name: string, execPath: string, iconData?: string) => void
   onCancel: () => void
 }
@@ -18,10 +19,10 @@ const PRESETS: { label: string; items: Preset[] }[] = [
   {
     label: 'Apps',
     items: [
-      { name: 'Firefox', execPath: 'firefox', color: '#e06c75' },
-      { name: 'Chrome', execPath: 'google-chrome', color: '#61afef' },
-      { name: 'Terminal', execPath: 'gnome-terminal', color: '#313244' },
-      { name: 'Files', execPath: 'nautilus', color: '#e5c07b' },
+      { name: 'Firefox', execPath: 'firefox.exe', color: '#e06c75' },
+      { name: 'Chrome', execPath: 'chrome.exe', color: '#61afef' },
+      { name: 'Terminal', execPath: 'wt.exe', color: '#313244' },
+      { name: 'Files', execPath: 'explorer.exe', color: '#e5c07b' },
       { name: 'VS Code', execPath: 'code', color: '#56b6c2' },
       { name: 'Spotify', execPath: 'spotify', color: '#98c379' },
       { name: 'Discord', execPath: 'discord', color: '#7289da' },
@@ -42,15 +43,15 @@ const PRESETS: { label: string; items: Preset[] }[] = [
   {
     label: 'Folders',
     items: [
-      { name: 'Home', execPath: '~', color: '#61afef' },
-      { name: 'Documents', execPath: '~/Documents', color: '#e5c07b' },
-      { name: 'Downloads', execPath: '~/Downloads', color: '#98c379' },
-      { name: 'Pictures', execPath: '~/Pictures', color: '#c678dd' },
+      { name: 'Home', execPath: '%USERPROFILE%', color: '#61afef' },
+      { name: 'Documents', execPath: 'shell:Personal', color: '#e5c07b' },
+      { name: 'Downloads', execPath: 'shell:Downloads', color: '#98c379' },
+      { name: 'Pictures', execPath: 'shell:My Pictures', color: '#c678dd' },
     ],
   },
 ]
 
-export function AddIconDialog({ onSave, onCancel }: AddIconDialogProps) {
+export function AddIconDialog({ onSave, onCancel, browsePath }: AddIconDialogProps) {
   const [execPath, setExecPath] = useState('')
   const [name, setName] = useState('')
   const [nameManuallyEdited, setNameManuallyEdited] = useState(false)
@@ -58,7 +59,8 @@ export function AddIconDialog({ onSave, onCancel }: AddIconDialogProps) {
   const [iconLocalData, setIconLocalData] = useState<string | null>(null)
   const [iconUrl, setIconUrl] = useState('')
   const pathInputRef = useRef<HTMLInputElement>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [browseError, setBrowseError] = useState<string | null>(null)
+  const [browsing, setBrowsing] = useState(false)
   const iconFileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -78,23 +80,17 @@ export function AddIconDialog({ onSave, onCancel }: AddIconDialogProps) {
   }
 
   // Browse for file/app/folder
-  const handleBrowseFile = () => {
-    fileInputRef.current?.click()
-  }
-
-  const handleFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    // Try to get the full file path (works in Tauri/Electron desktop contexts)
-    const filePath = (file as unknown as { path?: string }).path || file.name
-    setExecPath(filePath)
-    if (!nameManuallyEdited) {
-      setName(extractNameFromPath(filePath))
+  const handleBrowseFile = async () => {
+    setBrowsing(true)
+    setBrowseError(null)
+    try {
+      const filePath = await browsePath()
+      if (filePath) handlePathChange(filePath)
+    } catch (error) {
+      setBrowseError(error instanceof Error ? error.message : 'Could not open the file picker.')
+    } finally {
+      setBrowsing(false)
     }
-
-    // Reset file input so the same file can be re-selected
-    e.target.value = ''
   }
 
   // Icon file upload
@@ -215,20 +211,14 @@ export function AddIconDialog({ onSave, onCancel }: AddIconDialogProps) {
               type="text"
               value={execPath}
               onChange={(e) => handlePathChange(e.target.value)}
-              placeholder="e.g. /usr/bin/app or https://..."
+              placeholder="e.g. C:\\Apps\\app.exe or https://..."
               style={{ ...inputStyle, flex: 1 }}
             />
-            <button onClick={handleBrowseFile} style={browseBtnStyle}>
-              Browse...
+            <button onClick={handleBrowseFile} disabled={browsing} style={browseBtnStyle}>
+              {browsing ? 'Selecting…' : 'Browse…'}
             </button>
           </div>
-          {/* Hidden file input for path browsing */}
-          <input
-            ref={fileInputRef}
-            type="file"
-            style={{ display: 'none' }}
-            onChange={handleFileSelected}
-          />
+          {browseError && <p role="alert" style={{ color: '#e06c75' }}>{browseError}</p>}
 
           {/* Name */}
           <label style={labelStyle}>Name (auto-filled from path)</label>

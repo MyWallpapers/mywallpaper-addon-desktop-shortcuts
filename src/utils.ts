@@ -30,8 +30,6 @@ const DOMAIN_NAMES: Record<string, string> = {
   'claude.ai': 'Claude',
 }
 
-const STRIP_PREFIXES = ['gnome-', 'xfce4-', 'mate-', 'kde-', 'org.gnome.', 'org.kde.']
-
 function hashCode(str: string): number {
   let hash = 0
   for (let i = 0; i < str.length; i++) {
@@ -42,7 +40,7 @@ function hashCode(str: string): number {
 }
 
 export function generateLetterIcon(name: string, bgColor?: string): string {
-  const letter = (name || '?').charAt(0).toUpperCase()
+  const letter = (name || '?').charAt(0).toUpperCase().replace(/[&<>"']/g, (character) => `&#${character.charCodeAt(0)};`)
   const color = bgColor || ICON_PALETTE[hashCode(name) % ICON_PALETTE.length]
 
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
@@ -74,23 +72,12 @@ export function extractNameFromPath(path: string): string {
     }
   }
 
-  // Expand ~ for display
-  const expanded = trimmed.replace(/^~/, '/home/user')
-
   // Get basename
-  const parts = expanded.replace(/\/+$/, '').split('/')
+  const parts = trimmed.replace(/[\\/]+$/, '').split(/[\\/]/)
   let basename = parts[parts.length - 1] || trimmed
 
   // Strip extension
   basename = basename.replace(/\.\w+$/, '')
-
-  // Strip known prefixes (gnome-, xfce4-, etc.)
-  for (const prefix of STRIP_PREFIXES) {
-    if (basename.toLowerCase().startsWith(prefix)) {
-      basename = basename.slice(prefix.length)
-      break
-    }
-  }
 
   // Capitalize
   return basename.charAt(0).toUpperCase() + basename.slice(1)
@@ -100,7 +87,11 @@ export function parseIcons(json: string): ShortcutIcon[] {
   try {
     const parsed = JSON.parse(json)
     if (!Array.isArray(parsed)) return []
-    return parsed
+    return parsed.filter((icon): icon is ShortcutIcon =>
+      icon !== null && typeof icon === 'object' &&
+      typeof icon.id === 'string' && typeof icon.name === 'string' &&
+      typeof icon.execPath === 'string' && typeof icon.iconData === 'string' &&
+      Number.isInteger(icon.col) && icon.col >= 0 && Number.isInteger(icon.row) && icon.row >= 0)
   } catch {
     return []
   }
